@@ -158,8 +158,8 @@ const searchArtists = async (req, res) => {
       order: [['followers', 'DESC']],
       limit: limit ? Math.min(parseInt(limit), 5) : 5,
     });
-    const total = artists.count;
-    res.send({ artists: artists.rows, total: total });
+    const length = artists.count;
+    res.send({ artists: artists.rows, length: length });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

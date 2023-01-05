@@ -124,7 +124,7 @@ const searchAlbums = async (req, res) => {
   try {
     const {q, limit} = req.query;
 
-    const artists = Album.findAndCountAll({
+    const albums =await  Album.findAndCountAll({
       where: {
         [Op.or] : [
           {
@@ -139,12 +139,12 @@ const searchAlbums = async (req, res) => {
           }
         ]
       },
-      order: [['followers', 'DESC']],
+      order: [['releaseDate', 'DESC']],
       limit: limit? Math.min(limit, 5): 5,
     });
 
-    const total = artists.total;
-    res.send({artists: artists.value, total: total});
+    const length = albums.count;
+    res.send({ albums: albums.rows, length: length });
   } catch (error) {
     console.error(error);
     res.status(500).send(error);

@@ -6,7 +6,7 @@ const { searchAlbumsValidation } = require("../../validations/albums");
 
 const router = Router();
 
-router.get('/artists',searchArtistsValidation,searchArtists);
-router.get('/albums',searchAlbumsValidation, searchAlbums);
+router.get('/artists', searchArtistsValidation,searchArtists);
+router.get('/albums', searchAlbumsValidation, searchAlbums);
 
 module.exports = router;
