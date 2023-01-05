@@ -10,17 +10,27 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
     max: dbConfig.pool.max,
     min: dbConfig.pool.min,
     acquire: dbConfig.pool.acquire,
-    idle: dbConfig.pool.idle
-  }
+    idle: dbConfig.pool.idle,
+  },
 });
+
+Artist = require("../models/artist")(sequelize, Sequelize);
+Album = require("../models/album")(sequelize, Sequelize);
+AlbumArtist = require("../models/album_artist")(sequelize, Sequelize);
+
+//relatonships
+Album.belongsToMany(Artist, { through: 'albumartists' });
+Artist.belongsToMany(Album, { through: 'albumartists' });
 
 const db = {};
 
 db.Sequelize = Sequelize;
-db.Op = Sequelize.Op;
 db.sequelize = sequelize;
 
-db.artist = require("../models/artist.js")(sequelize, Sequelize);
-db.album = require("../models/album.js")(sequelize, Sequelize);
+db.Op = Sequelize.Op;
+
+db.Artist = Artist;
+db.Album = Album;
+db.AlbumArtist = AlbumArtist;
 
 module.exports = db;

@@ -10,7 +10,7 @@ const db = require("./database");
 
 try {
   db.sequelize.authenticate();
-  db.sequelize.sync();
+  db.sequelize.sync({alter: true});
   
   console.log("Connection has been established successfully.");
 } catch (error) {

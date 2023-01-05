@@ -3,12 +3,14 @@ module.exports = (sequelize, Sequelize) => {
     const {DataTypes} = Sequelize;
 
     const Album = sequelize.define(
-      "album",
+      "albums",
       {
         id: {
-          type: DataTypes.TEXT,
+          type: DataTypes.UUID,
+          defaultValue: DataTypes.UUIDV4,
           primaryKey: true,
           allowNull: false,
+          unique: true,
         },
         name: {
           type: DataTypes.TEXT,
@@ -18,11 +20,11 @@ module.exports = (sequelize, Sequelize) => {
           type: DataTypes.TEXT,
           allowNull: true,
         },
-        artists: {
-          type: DataTypes.ARRAY(DataTypes.JSON),
-          allowNull: false,
-          length: 24,
-        },
+        // artists: {
+        //   type: DataTypes.ARRAY(DataTypes.JSON),
+        //   allowNull: false,
+        //   length: 24,
+        // },
         totalTracks: {
           type: DataTypes.INTEGER,
           allowNull: true,
@@ -57,6 +59,7 @@ module.exports = (sequelize, Sequelize) => {
       },
       {
         timestamps: false,
+        freezeTableName: true,
       },
     );
   

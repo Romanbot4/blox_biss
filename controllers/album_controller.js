@@ -1,7 +1,10 @@
-const {Op} = require("sequelize");
+const { Op } = require("sequelize");
 const { validationResult } = require("express-validator");
 const db = require("./../database");
-const Album =  db.album;
+const { queryAllArtistsByIds } = require("./artist_controller");
+
+const Album = db.Album;
+const Artist = db.Artist;
 
 const createAlbum = async (req, res) => {
   const errors = validationResult(req);
@@ -10,7 +13,13 @@ const createAlbum = async (req, res) => {
   }
 
   try {
+    const artistIds = [...req.body.artists.map((e) => e.id)];
+    const artists = [...(await queryAllArtistsByIds(artistIds))];
+
+    delete req.body["artists"];
     const newAlbum = await Album.create(req.body);
+    await newAlbum.setArtists(artists);
+
     return res.status(201).send(newAlbum);
   } catch (error) {
     console.error(error);
@@ -20,12 +29,31 @@ const createAlbum = async (req, res) => {
 
 const getAlbums = async (req, res) => {
   try {
-    const limit = req.query.limit ? Match.min(parseInt(req.query.limit),20) : 20 ;
+    const limit = req.query.limit
+      ? Math.min(parseInt(req.query.limit), 20)
+      : 20;
     const offset = req.query.offset ? parseInt(req.query.offset) : 0;
-    const albums = await Album.findAndCountAll({ limit, offset });
+    const albums = await Album.findAndCountAll({
+      limit,
+      offset,
+      include: [
+        {
+          model: Artist,
+          attributes: ["id", "name", "images"],
+          through: {
+            attributes: [],
+          },
+        },
+      ],
+    });
     const total = albums.count;
     const next = offset + limit < total ? offset + limit : null;
-    res.send({ albums: albums.rows, length: albums.rows.length, next: next, total: total });
+    res.send({
+      albums: albums.rows,
+      length: albums.rows.length,
+      next: next,
+      total: total,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send(error);
@@ -62,15 +90,25 @@ const createAlbums = async (req, res) => {
 };
 
 const getAlbumById = async (req, res) => {
-  const errors =  validationResult(req);
-  if(!errors.isEmpty){
-    return res.status(422).send({errors: errors.array});
+  const errors = validationResult(req);
+  if (!errors.isEmpty) {
+    return res.status(422).send({ errors: errors.array });
   }
 
   try {
-    const album = await Album.findByPk(req.params.id);
+    const album = await Album.findByPk(req.params.id, {
+      include: [
+        {
+          model: Artist,
+          attributes: ["id", "name", "images"],
+          through: {
+            attributes: [],
+          },
+        },
+      ],
+    });
     if (!album) return res.status(404).send("Album not found");
-    
+
     res.send(album);
   } catch (error) {
     console.error(error);
@@ -82,7 +120,7 @@ const updateAlbum = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).send({ errors: errors.array()});
+      return res.status(400).send({ errors: errors.array() });
     }
 
     const album = await Album.findByPk(req.params.id);
@@ -99,8 +137,8 @@ const updateAlbum = async (req, res) => {
 
 const deleteAlbum = async (req, res) => {
   const errors = validationResult(req);
-  if(!errors.isEmtpy){
-    return res.status(422).send({ errors: errors.array()});
+  if (!errors.isEmtpy) {
+    return res.status(422).send({ errors: errors.array() });
   }
 
   try {
@@ -117,39 +155,48 @@ const deleteAlbum = async (req, res) => {
 
 const searchAlbums = async (req, res) => {
   const errors = validationResult(req);
-  if(!errors.isEmpty) {
-    return res.status(422).send({errors: errors.array()});
+  if (!errors.isEmpty) {
+    return res.status(422).send({ errors: errors.array() });
   }
 
   try {
-    const {q, limit} = req.query;
+    const { q, limit } = req.query;
 
-    const albums =await  Album.findAndCountAll({
+    const albums = await Album.findAndCountAll({
       where: {
-        [Op.or] : [
+        [Op.or]: [
           {
             name: {
-              [Op.iLike] : `%${q}%`
+              [Op.iLike]: `%${q}%`,
             },
           },
           {
             mmName: {
-              [Op.iLike]: `%${q}%`
-            }
-          }
-        ]
+              [Op.iLike]: `%${q}%`,
+            },
+          },
+        ],
       },
-      order: [['releaseDate', 'DESC']],
-      limit: limit? Math.min(limit, 5): 5,
+      order: [["releaseDate", "DESC"]],
+      limit: limit ? Math.min(limit, 5) : 5,
+      include: [
+        {
+          model: Artist,
+          attributes: ["id", "name", "images"],
+          through: {
+            attributes: [],
+          },
+        },
+      ],
     });
 
     const length = albums.count;
-    res.send({ albums: albums.rows, length: length });
+    res.send({ albums: albums.rows, length: albums.rows.length });
   } catch (error) {
     console.error(error);
     res.status(500).send(error);
   }
-}
+};
 
 module.exports = {
   createAlbum,

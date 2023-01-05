@@ -2,7 +2,7 @@ const { Op } = require("sequelize");
 const { check, validationResult } = require("express-validator");
 const db = require("./../database");
 const artist = require("../models/artist");
-const Artist =  db.artist;
+const Artist =  db.Artist;
 
 const createArtist = async (req, res) => {
   const errors = validationResult(req);
@@ -87,6 +87,21 @@ const getArtistById = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
+
+
+const queryAllArtistsByIds = async (userIds)  => {
+  const artists = await Artist.findAll(
+    {
+      where: {
+        id: {
+          [Op.in] :[...userIds]
+        }
+      }
+    }
+  );
+  console.log(artists.length ?? 0);
+  return artists;
+}
 
 const updateArtist = async (req, res) => {
   const errors = validationResult(req);
@@ -174,4 +189,6 @@ module.exports = {
   deleteArtist,
   searchArtists,
   getTopArtists,
+  //query methods,
+  queryAllArtistsByIds,
 };
